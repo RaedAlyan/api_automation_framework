@@ -9,5 +9,19 @@
         "status": "UP"
       }
     }
+  },
+  "get_all_products": {
+    "method": "GET",
+    "endpoint": "products",
+    "status_code": {
+      "ok": {
+        "code": 200,
+        "description": "Indicates a successful response."
+      },
+      "bad_request": {
+        "code": 400,
+        "description": "Indicates that the parameters provided are invalid."
+      }
+    }
   }
 }
