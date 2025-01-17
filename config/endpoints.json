@@ -1,0 +1,13 @@
+{
+  "base_url": "https://simple-grocery-store-api.glitch.me",
+  "status": {
+    "method": "GET",
+    "endpoint": "status",
+    "expected_response": {
+      "status_code": 200,
+      "body": {
+        "status": "UP"
+      }
+    }
+  }
+}
