@@ -16,17 +16,18 @@ class APIClient:
     def __init__(self, base_url: str):
         self.base_url = base_url
 
-    def send_request(self, method: str, endpoint: str) -> tuple:
+    def send_request(self, method: str, endpoint: str, **kwargs) -> tuple:
         """
         Sends an HTTP request to the specified endpoint.
 
         :param method: The HTTP method (e.g., "GET", "POST").
         :param endpoint: The API endpoint to send the request to.
-        :return:
+        :param kwargs: Additional arguments to pass to requests.request.
+        :return: a tuple containing the response body and status code.
         """
         url = f'{self.base_url}/{endpoint}'
         try:
-            response = request(method=method,url=url)
+            response = request(method=method,url=url, **kwargs)
             return response.json(), response.status_code
         except RequestException as e:
             raise RequestException(f'Failed to send a request to API! Error: {e}')
