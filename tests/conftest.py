@@ -20,4 +20,19 @@ def api_client(endpoints_loader):
     :return: An instance of the APIClient class.
     """
     base_url = endpoints_loader.get_endpoint('base_url')
+    if base_url is None:
+        raise ValueError("Base URL not found in endpoints configuration.")
     return APIClient(base_url)
+
+@pytest.fixture(scope='session')
+def products_endpoint(endpoints_loader: EndpointsLoader):
+    """
+    Fixture to retrieve the 'get_all_products' endpoint from the EndpointsLoader.
+
+    :param endpoints_loader: An instance of the EndpointsLoader class.
+    :return: The endpoint for getting all products.
+    """
+    all_product_endpoint = endpoints_loader.get_endpoint('get_all_products')
+    if all_product_endpoint is None:
+        raise ValueError("'get_all_products' endpoint not found in endpoints configuration.")
+    return all_product_endpoint
