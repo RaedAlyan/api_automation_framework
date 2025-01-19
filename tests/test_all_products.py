@@ -25,7 +25,7 @@ class TestAllProducts(BaseProduct):
     EndpointsLoader, api_client: APIClient) -> None:
         """
         Test the get_all_products endpoint without any parameters.
-        
+
         :param products_endpoint: Fixture to get products endpoint.
         :param endpoints_loader: Fixture to load endpoint configurations.
         :param api_client: Fixture to initialize the APIClient.
@@ -140,7 +140,7 @@ class TestAllProducts(BaseProduct):
         # Validate the status code
         api_client.validate_status_code(expected_status_code=expected_status_code, actual_status_code=status_code)
 
-    @pytest.mark.parametrize("invalid_category", ["invalid-category", "unknown", ""])
+    @pytest.mark.parametrize("invalid_category", ["test", "unknown", "ششش"])
     def test_get_all_products_invalid_category(self, invalid_category: str, products_endpoint: dict,
                                                endpoints_loader: EndpointsLoader, api_client: APIClient) -> None:
         """
