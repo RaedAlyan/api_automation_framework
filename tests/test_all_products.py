@@ -10,28 +10,32 @@ The tests cover various scenarios, including:
 @date: 01/17/2025
 @contact: raedeleyan1@gmail.com
 """
+import pytest
+from base_product import BaseProduct
 from utils.endpoints_loader import EndpointsLoader
 from utils.api_client import APIClient
 
 
-class TestAllProducts:
-    PRODUCTS_ENDPOINT: str = 'get_all_products'
-    OK_STATUS: str = 'ok'
-    BAD_REQUEST_STATUS: str = 'bad_request'
+class TestAllProducts(BaseProduct):
+    VALID_CATEGORIES = ["coffee", "meat-seafood", "fresh-produce", "candy", "bread-bakery", "dairy", "eggs"]
+    VALID_RESULTS = [1, 5, 10, 20]
+    INVALID_RESULTS = [-1, -100, 100, 1500]
 
-    def test_get_all_products_no_parameters(self, endpoints_loader: EndpointsLoader, api_client: APIClient) -> None:
+    def test_get_all_products_no_parameters(self, products_endpoint: dict, endpoints_loader:
+    EndpointsLoader, api_client: APIClient) -> None:
         """
         Test the get_all_products endpoint without any parameters.
-
+        
+        :param products_endpoint: Fixture to get products endpoint.
         :param endpoints_loader: Fixture to load endpoint configurations.
         :param api_client: Fixture to initialize the APIClient.
         """
-        products_endpoint = self._get_products_endpoint(endpoints_loader)
-        expected_status_code = self._get_expected_status_code(products_endpoint)
         response_body, status_code = api_client.send_request(
             method=products_endpoint.get('method'),
             endpoint=products_endpoint.get('endpoint')
         )
+
+        expected_status_code = self._get_expected_status_code(endpoint=products_endpoint, status_type=self.OK_STATUS)
 
         # Validate the status code
         api_client.validate_status_code(expected_status_code=expected_status_code, actual_status_code=status_code)
@@ -44,21 +48,24 @@ class TestAllProducts:
             assert "name" in product, "Product should have a 'name' field"
             assert "inStock" in product, "Product should have an 'inStock' field"
 
-
-    def test_get_all_products_with_category(self, endpoints_loader: EndpointsLoader, api_client: APIClient) -> None:
+    @pytest.mark.parametrize("category", VALID_CATEGORIES)
+    def test_get_all_products_with_category(self, products_endpoint: dict, category: str,
+                                            endpoints_loader: EndpointsLoader, api_client: APIClient) -> None:
         """
         Test the get_all_products endpoint with the 'category' parameter.
 
+        :param products_endpoint: Fixture to get products endpoint.
+        :param category: The category of products to filter by.
         :param endpoints_loader: Fixture to load endpoint configurations.
         :param api_client: Fixture to initialize the APIClient.
         """
-        products_endpoint = self._get_products_endpoint(endpoints_loader)
-        expected_status_code = self._get_expected_status_code(products_endpoint)
         response_body, status_code = api_client.send_request(
             method=products_endpoint.get('method'),
             endpoint=products_endpoint.get('endpoint'),
-            params={"category": "coffee"}
+            params={"category": category}
         )
+
+        expected_status_code = self._get_expected_status_code(endpoint=products_endpoint, status_type=self.OK_STATUS)
 
         # Validate the status code
         api_client.validate_status_code(expected_status_code=expected_status_code, actual_status_code=status_code)
@@ -67,72 +74,93 @@ class TestAllProducts:
         assert isinstance(response_body, list), "Response body should be a list of products"
         for product in response_body:
             assert "id" in product, "Product should have an 'id' field"
-            assert product["category"] == "coffee", "All products should belong to the 'coffee' category"
+            assert product["category"] == category, f"All products should belong to the '{category}' category"
             assert "name" in product, "Product should have a 'name' field"
             assert "inStock" in product, "Product should have an 'inStock' field"
 
-
-    def test_get_all_products_with_multiple_parameters(self, endpoints_loader: EndpointsLoader, api_client: APIClient) -> None:
+    @pytest.mark.parametrize("category", VALID_CATEGORIES)
+    @pytest.mark.parametrize("results", VALID_RESULTS)
+    def test_get_all_products_with_multiple_parameters(self, category: str, results: int, products_endpoint:dict,
+                                                       endpoints_loader: EndpointsLoader,
+                                                       api_client: APIClient) -> None:
         """
         Test the get_all_products endpoint with multiple parameters.
 
+        :param category: The category of products to filter by.
+        :param results: The number of results to return. Must be between 1 and 20.
+        :param products_endpoint: Fixture to get products endpoint.
         :param endpoints_loader: Fixture to load endpoint configurations.
         :param api_client: Fixture to initialize the APIClient.
         """
-        products_endpoint = self._get_products_endpoint(endpoints_loader)
-        expected_status_code = self._get_expected_status_code(products_endpoint)
+
+        # Validate that results is within the allowed range
+        assert 1 <= results <= 20, 'Results must be between 1 and 20'
         response_body, status_code = api_client.send_request(
             method=products_endpoint.get('method'),
             endpoint=products_endpoint.get('endpoint'),
-            params={"category": "coffee", "results": 2, "available": "true"}
+            params={"category": category, "results": results, "available": "true"}
         )
+
+        expected_status_code = self._get_expected_status_code(endpoint=products_endpoint, status_type=self.OK_STATUS)
 
         # Validate the status code
         api_client.validate_status_code(expected_status_code=expected_status_code, actual_status_code=status_code)
 
         # Validate the response body structure
         assert isinstance(response_body, list), "Response body should be a list of products"
-        assert len(response_body) <= 2, "Response should contain at most 2 products"
+        assert len(response_body) <= results, f"Response should contain at most {results} products"
         for product in response_body:
             assert "id" in product, "Product should have an 'id' field"
-            assert product["category"] == "coffee", "All products should belong to the 'coffee' category"
+            assert product["category"] == category, f"All products should belong to the '{category}' category"
             assert "name" in product, "Product should have a 'name' field"
             assert product["inStock"] is True, "All products should be in stock"
 
-    def test_get_all_products_invalid_results(self, endpoints_loader: EndpointsLoader, api_client: APIClient) -> None:
+    @pytest.mark.parametrize("results", INVALID_RESULTS)
+    def test_get_all_products_invalid_results(self, results: int, products_endpoint: dict,
+                                              endpoints_loader: EndpointsLoader, api_client: APIClient) -> None:
         """
         Test the get_all_products endpoint with an invalid 'results' parameter.
 
+        :param results: The number of results to return.
+        :param products_endpoint: Fixture to get products endpoint.
         :param endpoints_loader: Fixture to load endpoint configurations.
         :param api_client: Fixture to initialize the APIClient.
         """
-        products_endpoint = self._get_products_endpoint(endpoints_loader)
-        expected_status_code = self._get_expected_status_code(products_endpoint)
         response_body, status_code = api_client.send_request(
             method=products_endpoint.get('method'),
             endpoint=products_endpoint.get('endpoint'),
-            params={"results": -5}
+            params={"results": results}
+        )
+
+        expected_status_code = self._get_expected_status_code(
+            endpoint=products_endpoint,
+            status_type=self.BAD_REQUEST_STATUS
         )
 
         # Validate the status code
         api_client.validate_status_code(expected_status_code=expected_status_code, actual_status_code=status_code)
 
-    def _get_products_endpoint(self, endpoints_loader: EndpointsLoader) -> dict:
+    @pytest.mark.parametrize("invalid_category", ["invalid-category", "unknown", ""])
+    def test_get_all_products_invalid_category(self, invalid_category: str, products_endpoint: dict,
+                                               endpoints_loader: EndpointsLoader, api_client: APIClient) -> None:
         """
-        Helper method to get the products endpoint configuration.
+        Test the get_all_products endpoint with an invalid 'category' parameter.
 
+        :param invalid_category: An invalid category value.
+        :param products_endpoint: Fixture to get products endpoint.
         :param endpoints_loader: Fixture to load endpoint configurations.
-        :return: The products endpoint configuration.
+        :param api_client: Fixture to initialize the APIClient.
         """
-        return endpoints_loader.get_endpoint(self.PRODUCTS_ENDPOINT)
+        response_body, status_code = api_client.send_request(
+            method=products_endpoint.get('method'),
+            endpoint=products_endpoint.get('endpoint'),
+            params={"category": invalid_category}
+        )
 
-    @staticmethod
-    def _get_expected_status_code(products_endpoint: dict, status_type: str = OK_STATUS) -> int:
-        """
-        Helper method to get the expected status code.
+        expected_status_code = self._get_expected_status_code(
+            endpoint=products_endpoint,
+            status_type=self.BAD_REQUEST_STATUS
+        )
 
-        :param products_endpoint: The products endpoint configuration.
-        :param status_type: The type of status code to retrieve (e.g., "ok", "bad_request").
-        :return: The expected status code.
-        """
-        return products_endpoint.get('status_code').get(status_type)['code']
+        # Validate the status code
+        api_client.validate_status_code(expected_status_code=expected_status_code, actual_status_code=status_code)
