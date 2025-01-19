@@ -1,3 +1,10 @@
+"""
+This module defines pytest fixtures for loading and managing API endpoints and initializing the API client.
+
+@author: Raed Eleyan.
+@date: 01/19/2025
+@contact: raedeleyan1@gmail.com
+"""
 import pytest
 from utils.endpoints_loader import EndpointsLoader
 from utils.api_client import APIClient
